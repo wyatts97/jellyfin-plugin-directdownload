@@ -13,7 +13,6 @@
     <PackageReference Include="Jellyfin.Model" Version="10.10.5">
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Plugin.PluginPages" Version="1.2.2" />
   </ItemGroup>
 
   <ItemGroup>

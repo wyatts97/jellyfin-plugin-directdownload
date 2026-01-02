@@ -98,33 +98,33 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             var configFile = Path.Combine(configPath, "config.json");
             
             // Read existing config or create new
-            var pages = new List<PluginPageConfig>();
+            List<PluginPageConfig> pages;
             if (File.Exists(configFile))
             {
                 var existingJson = File.ReadAllText(configFile);
-                var existingConfig = JsonSerializer.Deserialize<PluginPagesConfig>(existingJson);
-                if (existingConfig?.Pages != null)
-                {
-                    pages = existingConfig.Pages.Where(p => p.PluginId != Id.ToString()).ToList();
-                }
+                pages = JsonSerializer.Deserialize<List<PluginPageConfig>>(existingJson) ?? new List<PluginPageConfig>();
+                // Remove any existing entries for our plugin
+                pages = pages.Where(p => p.PluginId != Id.ToString()).ToList();
+            }
+            else
+            {
+                pages = new List<PluginPageConfig>();
             }
             
-            // Add our page
+            // Add our page - format matches what Plugin Pages expects
             pages.Add(new PluginPageConfig
             {
                 PluginId = Id.ToString(),
-                PageId = "directdownload",
                 DisplayName = "Direct Download",
-                Route = "directdownload",
+                Route = "/configurationpage?name=directdownload",
                 Icon = "download",
                 MenuSection = "media"
             });
             
-            var config = new PluginPagesConfig { Pages = pages };
-            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(pages, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(configFile, json);
             
-            Logger.LogInformation("Registered Direct Download page with Plugin Pages");
+            Logger.LogInformation("Registered Direct Download page with Plugin Pages at {ConfigFile}", configFile);
         }
         catch (Exception ex)
         {
@@ -167,20 +167,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 }
 
 /// <summary>
-/// Plugin Pages configuration model.
-/// </summary>
-public class PluginPagesConfig
-{
-    public List<PluginPageConfig> Pages { get; set; } = new();
-}
-
-/// <summary>
 /// Individual page configuration for Plugin Pages.
 /// </summary>
 public class PluginPageConfig
 {
     public string PluginId { get; set; } = string.Empty;
-    public string PageId { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;
     public string Route { get; set; } = string.Empty;
     public string Icon { get; set; } = string.Empty;

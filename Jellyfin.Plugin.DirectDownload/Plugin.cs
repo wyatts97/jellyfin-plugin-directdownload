@@ -13,18 +13,37 @@ namespace Jellyfin.Plugin.DirectDownload;
 /// </summary>
 public class SimpleXmlSerializer : IXmlSerializer
 {
-    public void SerializeToFile<T>(T obj, string path)
+    public void SerializeToFile(object obj, string path)
     {
-        var serializer = new XmlSerializer(typeof(T));
+        var serializer = new XmlSerializer(obj.GetType());
         using var stream = new FileStream(path, FileMode.Create);
         serializer.Serialize(stream, obj);
     }
 
-    public T DeserializeFromFile<T>(string path)
+    public object DeserializeFromFile(Type type, string path)
     {
-        var serializer = new XmlSerializer(typeof(T));
+        var serializer = new XmlSerializer(type);
         using var stream = new FileStream(path, FileMode.Open);
-        return (T)serializer.Deserialize(stream)!;
+        return serializer.Deserialize(stream)!;
+    }
+
+    public void SerializeToStream(object obj, Stream stream)
+    {
+        var serializer = new XmlSerializer(obj.GetType());
+        serializer.Serialize(stream, obj);
+    }
+
+    public object DeserializeFromStream(Type type, Stream stream)
+    {
+        var serializer = new XmlSerializer(type);
+        return serializer.Deserialize(stream)!;
+    }
+
+    public object DeserializeFromBytes(Type type, byte[] buffer)
+    {
+        var serializer = new XmlSerializer(type);
+        using var stream = new MemoryStream(buffer);
+        return serializer.Deserialize(stream)!;
     }
 
     public T DeserializeFromString<T>(string value)

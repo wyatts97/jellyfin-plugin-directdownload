@@ -1,0 +1,14 @@
+---
+name: "Direct Download"
+guid: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+version: "1.0.0"
+targetAbi: "10.8.0.0"
+framework: "net6.0"
+owner: "JellyDirect"
+overview: "Search and download media from direct download sites with server-side downloads to library folders"
+description: "Direct Download plugin enables searching directory listings from direct download sites and downloading files directly to your Jellyfin library folders. Features include library path selection, download progress tracking, automatic library scanning, and support for Apache/nginx directory listings."
+category: "Metadata"
+artifacts:
+  - "Jellyfin.Plugin.DirectDownload.dll"
+build_type: "dotnet"
+dotnet_configuration: "Release"

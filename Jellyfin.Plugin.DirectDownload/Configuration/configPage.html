@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Direct Download Configuration</title>
+</head>
+<body>
+    <div id="DirectDownloadConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <form id="DirectDownloadConfigForm">
+                    <div class="sectionTitleContainer flex align-items-center">
+                        <h2 class="sectionTitle">Direct Download Settings</h2>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="txtMaxResults">Maximum Results per Source</label>
+                        <input is="emby-input" type="number" id="txtMaxResults" min="1" max="100" value="10" />
+                        <div class="fieldDescription">Maximum number of search results to return from each source.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="selectQuality">Preferred Quality</label>
+                        <select is="emby-select" id="selectQuality">
+                            <option value="480p">480p</option>
+                            <option value="720p">720p</option>
+                            <option value="1080p" selected>1080p</option>
+                            <option value="4K">4K</option>
+                        </select>
+                        <div class="fieldDescription">Preferred video quality for search results.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="txtMinSeeders">Minimum Seeders</label>
+                        <input is="emby-input" type="number" id="txtMinSeeders" min="0" max="1000" value="1" />
+                        <div class="fieldDescription">Minimum number of seeders required for a result.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="txtSearchTimeout">Search Timeout (seconds)</label>
+                        <input is="emby-input" type="number" id="txtSearchTimeout" min="5" max="120" value="30" />
+                        <div class="fieldDescription">Timeout for search requests in seconds.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel">
+                            <input is="emby-checkbox" type="checkbox" id="chkTrustedOnly" />
+                            <span>Trusted Uploaders Only</span>
+                        </label>
+                        <div class="fieldDescription">Only show results from trusted uploaders when available.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel">
+                            <input is="emby-checkbox" type="checkbox" id="chkEnableCaching" checked />
+                            <span>Enable Search Caching</span>
+                        </label>
+                        <div class="fieldDescription">Cache search results to improve performance.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="txtCacheDuration">Cache Duration (hours)</label>
+                        <input is="emby-input" type="number" id="txtCacheDuration" min="1" max="168" value="24" />
+                        <div class="fieldDescription">How long to cache search results in hours.</div>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit">
+                            <span>Save</span>
+                        </button>
+                        <button is="emby-button" type="button" class="raised button-cancel" id="btnTestSources">
+                            <span>Test Sources</span>
+                        </button>
+                    </div>
+
+                    <div id="testResults" style="margin-top: 20px; display: none;">
+                        <h3>Source Test Results</h3>
+                        <div id="testResultsList"></div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var DirectDownloadConfig = {
+                pluginUniqueId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+
+                loadConfiguration: function() {
+                    return ApiClient.getPluginConfiguration(DirectDownloadConfig.pluginUniqueId).then(function(config) {
+                        document.querySelector('#txtMaxResults').value = config.MaxResultsPerSource || 10;
+                        document.querySelector('#selectQuality').value = config.PreferredQuality || '1080p';
+                        document.querySelector('#txtMinSeeders').value = config.MinimumSeeders || 1;
+                        document.querySelector('#txtSearchTimeout').value = config.SearchTimeoutSeconds || 30;
+                        document.querySelector('#chkTrustedOnly').checked = config.TrustedOnly || false;
+                        document.querySelector('#chkEnableCaching').checked = config.EnableCaching !== false;
+                        document.querySelector('#txtCacheDuration').value = config.CacheDurationHours || 24;
+                    });
+                },
+
+                saveConfiguration: function() {
+                    var config = {
+                        MaxResultsPerSource: parseInt(document.querySelector('#txtMaxResults').value) || 10,
+                        PreferredQuality: document.querySelector('#selectQuality').value,
+                        MinimumSeeders: parseInt(document.querySelector('#txtMinSeeders').value) || 1,
+                        SearchTimeoutSeconds: parseInt(document.querySelector('#txtSearchTimeout').value) || 30,
+                        TrustedOnly: document.querySelector('#chkTrustedOnly').checked,
+                        EnableCaching: document.querySelector('#chkEnableCaching').checked,
+                        CacheDurationHours: parseInt(document.querySelector('#txtCacheDuration').value) || 24
+                    };
+
+                    return ApiClient.updatePluginConfiguration(DirectDownloadConfig.pluginUniqueId, config).then(function() {
+                        Dashboard.showAlert('Configuration saved successfully');
+                    });
+                },
+
+                testSources: function() {
+                    var testResultsDiv = document.querySelector('#testResults');
+                    var testResultsList = document.querySelector('#testResultsList');
+                    
+                    testResultsDiv.style.display = 'block';
+                    testResultsList.innerHTML = '<div>Testing sources...</div>';
+
+                    ApiClient.getJSON('/DirectDownload/Search/sources').then(function(sources) {
+                        var testPromises = sources.map(function(source) {
+                            return ApiClient.getJSON('/DirectDownload/Search/test/' + source.Name).then(function(result) {
+                                return {
+                                    name: source.Name,
+                                    success: result
+                                };
+                            }).catch(function() {
+                                return {
+                                    name: source.Name,
+                                    success: false
+                                };
+                            });
+                        });
+
+                        Promise.all(testPromises).then(function(results) {
+                            testResultsList.innerHTML = results.map(function(result) {
+                                return '<div style="margin: 5px 0;">' + 
+                                       '<span style="color: ' + (result.success ? 'green' : 'red') + '">' + 
+                                       (result.success ? '✓' : '✗') + ' ' + result.name + 
+                                       '</span></div>';
+                            }).join('');
+                        });
+                    }).catch(function(error) {
+                        testResultsList.innerHTML = '<div style="color: red;">Error testing sources: ' + error.message + '</div>';
+                    });
+                }
+            };
+
+            document.addEventListener('DOMContentLoaded', function() {
+                DirectDownloadConfig.loadConfiguration();
+
+                document.querySelector('#DirectDownloadConfigForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    DirectDownloadConfig.saveConfiguration();
+                });
+
+                document.querySelector('#btnTestSources').addEventListener('click', function() {
+                    DirectDownloadConfig.testSources();
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

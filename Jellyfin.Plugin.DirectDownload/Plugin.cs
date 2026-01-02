@@ -5,6 +5,7 @@ using MediaBrowser.Model.Plugins;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Serialization;
 using System.Xml.Serialization;
+using System.Collections.Generic;
 
 namespace Jellyfin.Plugin.DirectDownload;
 
@@ -65,7 +66,7 @@ public class SimpleXmlSerializer : IXmlSerializer
 /// <summary>
 /// The main plugin class for Jellyfin Direct Download.
 /// </summary>
-public class Plugin : BasePlugin<PluginConfiguration>
+public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
@@ -95,4 +96,22 @@ public class Plugin : BasePlugin<PluginConfiguration>
 
     /// <inheritdoc />
     public override Guid Id => Guid.Parse("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
+
+    /// <inheritdoc />
+    public IEnumerable<PluginPageInfo> GetPages()
+    {
+        return new[]
+        {
+            new PluginPageInfo
+            {
+                Name = "Direct Download Search",
+                EmbeddedResourcePath = GetType().Namespace + ".Configuration.directdownload.html"
+            },
+            new PluginPageInfo
+            {
+                Name = "Direct Download Settings",
+                EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html"
+            }
+        };
+    }
 }

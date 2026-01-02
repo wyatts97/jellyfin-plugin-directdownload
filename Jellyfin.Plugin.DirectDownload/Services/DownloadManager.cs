@@ -26,7 +26,7 @@ public class DownloadManager : IDownloadManager
     }
 
     /// <inheritdoc />
-    public async Task<string> StartDownloadAsync(string url, string fileName, LibraryPath libraryPath, string mediaType, string quality, CancellationToken cancellationToken = default)
+    public Task<string> StartDownloadAsync(string url, string fileName, LibraryPath libraryPath, string mediaType, string quality, CancellationToken cancellationToken = default)
     {
         var task = new DownloadTask
         {
@@ -45,7 +45,7 @@ public class DownloadManager : IDownloadManager
         // Start download in background
         _ = Task.Run(async () => await PerformDownloadAsync(task), cancellationToken);
 
-        return task.TaskId;
+        return Task.FromResult(task.TaskId);
     }
 
     private async Task PerformDownloadAsync(DownloadTask task)
@@ -174,16 +174,16 @@ public class DownloadManager : IDownloadManager
     }
 
     /// <inheritdoc />
-    public async Task<bool> CancelDownloadAsync(string taskId)
+    public Task<bool> CancelDownloadAsync(string taskId)
     {
         if (_cancellationTokens.TryGetValue(taskId, out var cts))
         {
             cts.Cancel();
             _logger.LogInformation("Cancelling download: {TaskId}", taskId);
-            return true;
+            return Task.FromResult(true);
         }
 
-        return false;
+        return Task.FromResult(false);
     }
 
     /// <inheritdoc />
@@ -204,7 +204,7 @@ public class DownloadManager : IDownloadManager
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<LibraryPath>> GetLibraryPathsAsync()
+    public Task<IEnumerable<LibraryPath>> GetLibraryPathsAsync()
     {
         // This would integrate with Jellyfin's library manager
         // For now, return common library paths from configuration
@@ -241,11 +241,11 @@ public class DownloadManager : IDownloadManager
             _logger.LogError(ex, "Error getting library paths");
         }
 
-        return paths;
+        return Task.FromResult<IEnumerable<LibraryPath>>(paths);
     }
 
     /// <inheritdoc />
-    public async Task<bool> TriggerLibraryScanAsync(LibraryPath libraryPath)
+    public Task<bool> TriggerLibraryScanAsync(LibraryPath libraryPath)
     {
         try
         {
@@ -256,12 +256,12 @@ public class DownloadManager : IDownloadManager
             // In a full implementation, you would call:
             // await _libraryManager.ValidateMediaLibrary(new Progress<double>(), cancellationToken);
             
-            return true;
+            return Task.FromResult(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error triggering library scan");
-            return false;
+            return Task.FromResult(false);
         }
     }
 

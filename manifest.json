@@ -10,7 +10,7 @@
       "version": "1.0.0.0",
       "changelog": "Initial release\n- Direct download site support with directory browsing\n- Server-side downloads to library folders\n- Library path selection and management\n- Real-time download progress tracking\n- Automatic library scanning after downloads\n- Support for Apache/nginx directory listings\n- Recursive directory traversal\n- Modern UI with search and filtering",
       "targetAbi": "10.8.0.0",
-      "sourceUrl": "https://github.com/YOUR_USERNAME/jellyfin-plugin-directdownload/releases/download/v1.0.0/Jellyfin.Plugin.DirectDownload.zip",
+      "sourceUrl": "https://github.com/wyatts97/jellyfin-plugin-directdownload/releases/download/v1.0.0/Jellyfin.Plugin.DirectDownload.zip",
       "checksum": "CHECKSUM_WILL_BE_GENERATED",
       "timestamp": "2026-01-02T04:25:00Z"
     }

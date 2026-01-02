@@ -104,8 +104,9 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         {
             new PluginPageInfo
             {
-                Name = this.Name,
-                EmbeddedResourcePath = GetType().Namespace + ".Configuration.directdownload.html"
+                Name = "directdownload",
+                EmbeddedResourcePath = GetType().Namespace + ".Configuration.directdownload.html",
+                DisplayName = "Direct Download Search"
             }
         };
     }

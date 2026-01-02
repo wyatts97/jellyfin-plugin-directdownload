@@ -1,5 +1,6 @@
 using Jellyfin.Plugin.DirectDownload.Services;
-using MediaBrowser.Common.Plugins;
+using MediaBrowser.Controller;
+using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.DirectDownload;
@@ -7,10 +8,10 @@ namespace Jellyfin.Plugin.DirectDownload;
 /// <summary>
 /// Service registration for the Direct Download plugin.
 /// </summary>
-public class ServiceRegistrator : IPluginServiceRegistrator
+public class PluginServiceRegistrator : IPluginServiceRegistrator
 {
     /// <inheritdoc />
-    public void RegisterServices(IServiceCollection serviceCollection)
+    public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
     {
         // Register directory parser
         serviceCollection.AddSingleton<DirectoryParser>();

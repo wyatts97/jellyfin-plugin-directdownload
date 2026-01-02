@@ -6,6 +6,7 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Serialization;
 using System.Xml.Serialization;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace Jellyfin.Plugin.DirectDownload;
 
@@ -68,6 +69,8 @@ public class SimpleXmlSerializer : IXmlSerializer
 /// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
+    private readonly IApplicationPaths _applicationPaths;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Plugin"/> class.
     /// </summary>
@@ -75,7 +78,58 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public Plugin(IApplicationPaths applicationPaths) : base(applicationPaths, new SimpleXmlSerializer())
     {
         Instance = this;
+        _applicationPaths = applicationPaths;
         Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger<Plugin>();
+        
+        // Register with Plugin Pages
+        RegisterWithPluginPages();
+    }
+
+    /// <summary>
+    /// Registers this plugin's pages with the Plugin Pages system.
+    /// </summary>
+    private void RegisterWithPluginPages()
+    {
+        try
+        {
+            var configPath = Path.Combine(_applicationPaths.PluginConfigurationsPath, "Jellyfin.Plugin.PluginPages");
+            Directory.CreateDirectory(configPath);
+            
+            var configFile = Path.Combine(configPath, "config.json");
+            
+            // Read existing config or create new
+            var pages = new List<PluginPageConfig>();
+            if (File.Exists(configFile))
+            {
+                var existingJson = File.ReadAllText(configFile);
+                var existingConfig = JsonSerializer.Deserialize<PluginPagesConfig>(existingJson);
+                if (existingConfig?.Pages != null)
+                {
+                    pages = existingConfig.Pages.Where(p => p.PluginId != Id.ToString()).ToList();
+                }
+            }
+            
+            // Add our page
+            pages.Add(new PluginPageConfig
+            {
+                PluginId = Id.ToString(),
+                PageId = "directdownload",
+                DisplayName = "Direct Download",
+                Route = "directdownload",
+                Icon = "download",
+                MenuSection = "media"
+            });
+            
+            var config = new PluginPagesConfig { Pages = pages };
+            var json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(configFile, json);
+            
+            Logger.LogInformation("Registered Direct Download page with Plugin Pages");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not register with Plugin Pages - this is optional");
+        }
     }
 
     /// <summary>
@@ -110,4 +164,25 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             }
         };
     }
+}
+
+/// <summary>
+/// Plugin Pages configuration model.
+/// </summary>
+public class PluginPagesConfig
+{
+    public List<PluginPageConfig> Pages { get; set; } = new();
+}
+
+/// <summary>
+/// Individual page configuration for Plugin Pages.
+/// </summary>
+public class PluginPageConfig
+{
+    public string PluginId { get; set; } = string.Empty;
+    public string PageId { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Route { get; set; } = string.Empty;
+    public string Icon { get; set; } = string.Empty;
+    public string MenuSection { get; set; } = string.Empty;
 }
